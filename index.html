@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Achadinhos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d2358;--bg:#f2f4fb;--card:#fff;--sun:#ffe600;--muted:#5d6388}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+header{background:var(--ink);color:#fff;padding:calc(36px + env(safe-area-inset-top,0px)) 20px 44px;text-align:center;border-radius:0 0 32px 32px}
+.avatar{width:84px;height:84px;border-radius:50%;background:var(--sun);color:var(--ink);display:grid;place-items:center;font-size:36px;font-weight:800;margin:0 auto 14px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+header p{margin-top:6px;opacity:.85;max-width:32ch;margin-inline:auto;line-height:1.4}
+main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 2px 0 rgba(29,35,88,.08);transition:transform .15s}
+.card:active{transform:scale(.97)}
+.card:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.foto{aspect-ratio:1;background:#e5e8f5 center/cover no-repeat;position:relative}
+.tag{position:absolute;top:8px;left:8px;background:var(--sun);color:var(--ink);font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px}
+.info{padding:12px 12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.nome{font-size:14px;line-height:1.3;font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.preco{font-size:18px;font-weight:800;margin-top:auto}
+.btn{background:var(--sun);color:var(--ink);text-align:center;font-weight:800;font-size:14px;padding:9px;border-radius:10px}
+.vazio{text-align:center;color:var(--muted);padding:48px 0}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:0 20px 32px;line-height:1.5}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="avatar" id="ini"></div>
+  <h1 id="nome"></h1>
+  <p id="bio"></p>
+</header>
+<main><div class="grid" id="grid"></div><p class="vazio" id="msg">Carregando produtos...</p></main>
+<footer>Ao comprar pelos links, posso receber uma comissão, sem custo extra para você.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const C = window.CONFIG;
+document.title = C.NOME + " | Achadinhos";
+document.getElementById('nome').textContent = C.NOME;
+document.getElementById('bio').textContent = C.BIO;
+document.getElementById('ini').textContent = C.NOME.trim().charAt(0).toUpperCase();
+
+const db = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+(async () => {
+  const msg = document.getElementById('msg'), grid = document.getElementById('grid');
+  const { data, error } = await db.from('products').select('*').order('created_at',{ascending:false});
+  if (error) { msg.textContent = 'Não foi possível carregar os produtos. Tente de novo em instantes.'; return; }
+  if (!data.length) { msg.textContent = 'Ainda não há produtos por aqui. Volte em breve!'; return; }
+  msg.remove();
+  data.forEach(p => {
+    const a = document.createElement('a');
+    a.className = 'card'; a.href = p.link; a.target = '_blank'; a.rel = 'sponsored noopener noreferrer';
+    const foto = document.createElement('div'); foto.className = 'foto';
+    if (p.image_url) foto.style.backgroundImage = `url("${encodeURI(p.image_url)}")`;
+    if (p.own) { const t = document.createElement('span'); t.className = 'tag'; t.textContent = 'Produto meu'; foto.append(t); }
+    const info = document.createElement('div'); info.className = 'info';
+    const n = document.createElement('div'); n.className = 'nome'; n.textContent = p.title;
+    const pr = document.createElement('div'); pr.className = 'preco'; pr.textContent = brl(p.price);
+    const b = document.createElement('div'); b.className = 'btn'; b.textContent = p.own ? 'Comprar' : 'Ver no ' + C.LOJA;
+    info.append(n, pr, b); a.append(foto, info); grid.append(a);
+  });
+})();
+</script>
+</body>
+</html>

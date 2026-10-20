@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Painel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1d2358;--bg:#f2f4fb;--sun:#ffe600;--muted:#5d6388;--red:#c62828}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:20px 16px 48px}
+.wrap{max-width:520px;margin:0 auto}
+h1{font-size:26px;font-weight:800;margin-bottom:16px}
+h2{font-size:18px;margin:28px 0 10px}
+.box{background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+label{font-size:14px;font-weight:600;display:flex;flex-direction:column;gap:5px}
+input,select{font:inherit;padding:11px 12px;border:2px solid #d9ddf0;border-radius:10px;background:#fff;color:var(--ink)}
+input:focus,select:focus,button:focus-visible{outline:3px solid var(--ink);outline-offset:1px}
+button{font:inherit;font-weight:800;border:0;border-radius:10px;padding:12px;background:var(--sun);color:var(--ink);cursor:pointer}
+button.sec{background:#e5e8f5}
+button:disabled{opacity:.6}
+.chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:20px;height:20px}
+.aviso{font-size:14px;min-height:20px}.aviso.erro{color:var(--red)}.aviso.ok{color:#1b7a3d}
+.item{display:flex;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:10px;margin-bottom:8px}
+.item img{width:52px;height:52px;border-radius:10px;object-fit:cover;background:#e5e8f5}
+.item div{flex:1;min-width:0;font-size:14px}.item b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item span{color:var(--muted)}
+.item button{padding:8px 12px;background:#fde8e8;color:var(--red)}
+.topo{display:flex;justify-content:space-between;align-items:center}
+.topo button{padding:8px 14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<section id="login" hidden>
+  <h1>Entrar no painel</h1>
+  <form class="box" id="fLogin">
+    <label>E-mail<input type="email" id="email" required autocomplete="username"></label>
+    <label>Senha<input type="password" id="senha" required autocomplete="current-password"></label>
+    <button>Entrar</button>
+    <p class="aviso erro" id="erroLogin"></p>
+  </form>
+</section>
+
+<section id="painel" hidden>
+  <div class="topo"><h1>Meus produtos</h1><button class="sec" id="sair">Sair</button></div>
+  <form class="box" id="fProd">
+    <label>Nome do produto<input id="title" required maxlength="120"></label>
+    <label>Preço (R$)<input id="price" type="number" step="0.01" min="0" inputmode="decimal"></label>
+    <label>Link de afiliado ou de compra<input id="link" type="url" required placeholder="https://..."></label>
+    <label>Foto do produto<input id="foto" type="file" accept="image/*"></label>
+    <label class="chk"><input type="checkbox" id="own">É um produto meu (não é afiliado)</label>
+    <button id="salvar">Adicionar produto</button>
+    <p class="aviso" id="aviso"></p>
+  </form>
+  <h2>Já publicados</h2>
+  <div id="lista"></div>
+</section>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const C = window.CONFIG;
+const db = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+const brl = n => n == null ? 'sem preço' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const say = (t, cls='') => { $('aviso').textContent = t; $('aviso').className = 'aviso ' + cls; };
+
+function tela(logado) { $('login').hidden = logado; $('painel').hidden = !logado; if (logado) carregar(); }
+
+db.auth.getSession().then(({data}) => tela(!!data.session));
+
+$('fLogin').onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await db.auth.signInWithPassword({ email: $('email').value, password: $('senha').value });
+  $('erroLogin').textContent = error ? 'E-mail ou senha incorretos.' : '';
+  if (!error) tela(true);
+};
+$('sair').onclick = async () => { await db.auth.signOut(); tela(false); };
+
+async function carregar() {
+  const { data, error } = await db.from('products').select('*').order('created_at',{ascending:false});
+  const box = $('lista'); box.replaceChildren();
+  if (error) { box.textContent = 'Erro ao carregar a lista.'; return; }
+  if (!data.length) { box.textContent = 'Nenhum produto ainda. Adicione o primeiro acima.'; return; }
+  data.forEach(p => {
+    const row = document.createElement('div'); row.className = 'item';
+    const img = document.createElement('img'); img.alt = ''; if (p.image_url) img.src = p.image_url;
+    const info = document.createElement('div');
+    const b = document.createElement('b'); b.textContent = p.title;
+    const s = document.createElement('span'); s.textContent = brl(p.price) + (p.own ? ' · produto meu' : '');
+    info.append(b, s);
+    const del = document.createElement('button'); del.textContent = 'Apagar';
+    del.onclick = async () => {
+      if (!confirm('Apagar "' + p.title + '"?')) return;
+      const { error } = await db.from('products').delete().eq('id', p.id);
+      if (error) alert('Não foi possível apagar.'); else carregar();
+    };
+    row.append(img, info, del); box.append(row);
+  });
+}
+
+$('fProd').onsubmit = async e => {
+  e.preventDefault();
+  $('salvar').disabled = true; say('Salvando...');
+  try {
+    let image_url = null;
+    const f = $('foto').files[0];
+    if (f) {
+      const nome = Date.now() + '-' + f.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const up = await db.storage.from('produtos').upload(nome, f);
+      if (up.error) throw up.error;
+      image_url = db.storage.from('produtos').getPublicUrl(nome).data.publicUrl;
+    }
+    const preco = $('price').value;
+    const { error } = await db.from('products').insert({
+      title: $('title').value.trim(),
+      price: preco === '' ? null : Number(preco),
+      link: $('link').value.trim(),
+      own: $('own').checked,
+      image_url
+    });
+    if (error) throw error;
+    $('fProd').reset(); say('Produto publicado.', 'ok'); carregar();
+  } catch (err) {
+    say('Não foi possível salvar: ' + (err.message || 'erro desconhecido'), 'erro');
+  }
+  $('salvar').disabled = false;
+};
+</script>
+</body>
+</html>
