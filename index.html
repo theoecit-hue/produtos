@@ -54,7 +54,8 @@ const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'curre
 let todos = [];
 
 function linkAfiliadoBusca(termo){
-  return `https://lista.mercadolivre.com.br/${encodeURIComponent(termo)}?matt_word=${TAG}&matt_tool=${TOOL}&forceInApp=true`;
+  // CORRIGIDO: agora usa /social/ que conta nas métricas
+  return `https://www.mercadolivre.com.br/social/${TAG}/search?matt_word=${TAG}&matt_tool=${TOOL}&forceInApp=true&q=${encodeURIComponent(termo)}`;
 }
 
 function render(lista){
@@ -99,7 +100,7 @@ function buscarNoML(){
   const msg=document.getElementById('msg');
   const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
   if(error){ msg.textContent='Erro: '+error.message; return; }
-  todos=data||[]; msg.remove(); render(todos);
+  todos=data||[]; if(msg) msg.remove(); render(todos);
 })();
 </script>
 </body>
