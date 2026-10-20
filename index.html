@@ -9,14 +9,18 @@
 :root{--ink:#1d2358;--bg:#f2f4fb;--card:#fff;--sun:#ffe600;--muted:#5d6388}
 *{box-sizing:border-box;margin:0}
 body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
-header{background:var(--ink);color:#fff;padding:32px 20px 28px;text-align:center;border-radius:0 0 32px 32px}
+header{background:var(--ink);color:#fff;padding:32px 20px 20px;text-align:center;border-radius:0 0 32px 32px}
 .avatar{width:84px;height:84px;border-radius:50%;background:var(--sun);color:var(--ink);display:grid;place-items:center;font-size:36px;font-weight:800;margin:0 auto 12px}
 h1{font-size:28px;font-weight:800}
 header p{margin-top:6px;opacity:.85}
 .search-box{margin-top:20px;max-width:520px;margin-inline:auto;background:#fff;border-radius:99px;padding:6px 6px 6px 18px;display:flex;gap:8px;align-items:center;border:2px solid #ffe600}
 .search-box input{flex:1;border:0;outline:0;font-family:inherit;font-weight:600;font-size:15px;color:#1d2358;background:transparent}
 .search-box button{background:var(--sun);color:var(--ink);border:0;border-radius:99px;padding:12px 20px;font-weight:800;cursor:pointer}
-main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
+.categorias{margin-top:18px;display:flex;gap:8px;overflow-x:auto;justify-content:flex-start;padding-bottom:4px;scrollbar-width:none;max-width:760px;margin-inline:auto}
+.categorias::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:99px;font-weight:700;font-size:14px;cursor:pointer}
+.chip.ativo{background:var(--sun);color:var(--ink);border-color:var(--sun)}
+main{max-width:760px;margin:0 auto;padding:18px 16px 40px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 @media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
 .card{background:var(--card);border-radius:18px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 2px 0 rgba(29,35,88,.08)}
@@ -35,9 +39,10 @@ main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
   <h1>BESSA STORE</h1>
   <p>Achadinhos que eu realmente recomendo.</p>
   <div class="search-box">
-    <input id="busca" placeholder="Buscar na loja: poco x7, jbl..." oninput="buscarLocal()">
-    <button onclick="buscarLocal()">Buscar</button>
+    <input id="busca" placeholder="Buscar na loja..." oninput="filtrar()">
+    <button onclick="filtrar()">Buscar</button>
   </div>
+  <div class="categorias" id="cats"></div>
 </header>
 <main><div class="grid" id="grid"></div><p class="vazio" id="msg">Carregando produtos...</p></main>
 
@@ -48,23 +53,57 @@ function cleanUrl(u){ return (u||'').trim().replace(/\/rest\/v1\/?$/i,'').replac
 const C = window.CONFIG;
 const db = supabase.createClient(cleanUrl(C.SUPABASE_URL), (C.SUPABASE_ANON_KEY||'').trim());
 const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let todos = [];
 
-function render(lista){
+let todos = [];
+let catAtiva = 'todos';
+
+// EDITA AQUI SUAS CATEGORIAS SE QUISER
+const CATEGORIAS = [
+  {id:'todos', label:'Todos', keys:[]},
+  {id:'celular', label:'Celulares', keys:['poco','xiaomi','iphone','samsung','moto','realme','celular']},
+  {id:'audio', label:'Áudio', keys:['jbl','fones','headset','caixa','sound','echo']},
+  {id:'casa', label:'Casa', keys:['casa','cozinha','ventilador','air fryer','panela']},
+  {id:'beleza', label:'Beleza', keys:['beleza','perfume','secador','maquiagem']},
+];
+
+function montaCats(){
+  const c = document.getElementById('cats');
+  CATEGORIAS.forEach(cat=>{
+    const b=document.createElement('button');
+    b.className='chip'+(cat.id===catAtiva?' ativo':'');
+    b.textContent=cat.label;
+    b.onclick=()=>{catAtiva=cat.id; document.querySelectorAll('.chip').forEach(x=>x.classList.remove('ativo')); b.classList.add('ativo'); filtrar();};
+    c.append(b);
+  });
+}
+
+function filtrar(){
+  const termo = document.getElementById('busca').value.toLowerCase().trim();
+  let lista = [...todos];
+
+  if(catAtiva!=='todos'){
+    const cat = CATEGORIAS.find(x=>x.id===catAtiva);
+    lista = lista.filter(p=>{
+      if(p.category && p.category.toLowerCase()===catAtiva) return true;
+      return cat.keys.some(k=>p.title.toLowerCase().includes(k));
+    });
+  }
+  if(termo){
+    lista = lista.filter(p=>p.title.toLowerCase().includes(termo));
+  }
+  render(lista, termo);
+}
+
+function render(lista, termoBuscado=''){
   const grid = document.getElementById('grid');
   const msg = document.getElementById('msg');
   grid.innerHTML = '';
   if(lista.length===0){
-    const termo = document.getElementById('busca').value.trim();
-    if(termo){
-      msg.style.display='block';
-      msg.textContent = `Nenhum produto encontrado para "${termo}" na loja.`;
-    } else {
-      msg.style.display='none';
-    }
+    msg.style.display='block';
+    msg.textContent = termoBuscado ? `Nenhum produto em "${CATEGORIAS.find(c=>c.id===catAtiva).label}" para "${termoBuscado}"` : `Nenhum produto em "${CATEGORIAS.find(c=>c.id===catAtiva).label}" ainda.`;
     return;
   }
-  if(msg) msg.style.display='none';
+  msg.style.display='none';
   lista.forEach(p=>{
     const a=document.createElement('a'); a.className='card'; a.href=p.link; a.target='_blank'; a.rel='sponsored noopener';
     const foto=document.createElement('div'); foto.className='foto'; if(p.image_url) foto.style.backgroundImage=`url("${p.image_url}")`;
@@ -77,14 +116,8 @@ function render(lista){
   });
 }
 
-function buscarLocal(){
-  const termo = document.getElementById('busca').value.toLowerCase().trim();
-  if(!termo){ render(todos); return; }
-  const f = todos.filter(p=>p.title.toLowerCase().includes(termo));
-  render(f);
-}
-
 (async()=>{
+  montaCats();
   const msg=document.getElementById('msg');
   const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
   if(error){ msg.textContent='Erro: '+error.message; return; }
