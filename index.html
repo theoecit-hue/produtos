@@ -36,7 +36,7 @@ main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
   <p id="bio">Achadinhos que eu realmente recomendo.</p>
   <div class="search-box">
     <input id="busca" placeholder="Buscar: poco x7, jbl, iphone..." oninput="buscarLocal()">
-    <button onclick="buscarNoML()">Buscar no ML</button>
+    <button onclick="buscarNoML()">Buscar</button>
   </div>
 </header>
 <main><div class="grid" id="grid"></div><p class="vazio" id="msg">Carregando produtos...</p></main>
@@ -46,17 +46,10 @@ main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
 <script>
 function cleanUrl(u){ return (u||'').trim().replace(/\/rest\/v1\/?$/i,'').replace(/\/+$/,''); }
 const C = window.CONFIG;
-const TAG = "t20250703162358";
-const TOOL = "23640308";
 const SUPABASE_URL = cleanUrl(C.SUPABASE_URL);
 const db = supabase.createClient(SUPABASE_URL, (C.SUPABASE_ANON_KEY||'').trim());
 const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let todos = [];
-
-function linkAfiliadoBusca(termo){
-  // CORRIGIDO: agora usa /social/ que conta nas métricas
-  return `https://www.mercadolivre.com.br/social/${TAG}/search?matt_word=${TAG}&matt_tool=${TOOL}&forceInApp=true&q=${encodeURIComponent(termo)}`;
-}
 
 function render(lista){
   const grid = document.getElementById('grid');
@@ -64,11 +57,11 @@ function render(lista){
   if(lista.length===0){
     const termo = document.getElementById('busca').value.trim();
     if(termo){
-      grid.innerHTML = `<a href="${linkAfiliadoBusca(termo)}" target="_blank" style="grid-column:1/-1;background:#fff;border:2px dashed #1d2358;border-radius:18px;padding:24px;text-align:center;text-decoration:none;color:#1d2358">
+      grid.innerHTML = `<div style="grid-column:1/-1;background:#fff;border:2px dashed #1d2358;border-radius:18px;padding:24px;text-align:center;color:#1d2358">
         <div style="font-weight:800">Não temos "${termo}" cadastrado ainda</div>
-        <div style="margin-top:10px;background:#ffe600;display:inline-block;padding:12px 20px;border-radius:12px;font-weight:800">Ver ${termo} no Mercado Livre com meu link →</div>
-        <div style="margin-top:8px;font-size:12px;color:#5d6388">Compra com minha comissão automática</div>
-      </a>`;
+        <div style="margin-top:10px;background:#ffe600;display:inline-block;padding:12px 20px;border-radius:12px;font-weight:800;cursor:pointer" onclick="buscarNoML()">Buscar ${termo} no Mercado Livre →</div>
+        <div style="margin-top:8px;font-size:12px;color:#5d6388">Cadastre esse produto no seu painel para ganhar comissão</div>
+      </div>`;
     }
     return;
   }
@@ -93,7 +86,7 @@ function buscarLocal(){
 function buscarNoML(){
   const termo = document.getElementById('busca').value.trim();
   if(!termo){ alert('Digite o que quer buscar'); return; }
-  window.open(linkAfiliadoBusca(termo), '_blank');
+  window.open(`https://lista.mercadolivre.com.br/${encodeURIComponent(termo)}`, '_blank');
 }
 
 (async()=>{
