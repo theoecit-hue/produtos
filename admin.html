@@ -3,135 +3,160 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>Painel</title>
+<title>Painel - Achadinhos</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#1d2358;--bg:#f2f4fb;--sun:#ffe600;--muted:#5d6388;--red:#c62828}
+:root{--ink:#1d2358;--bg:#f2f4fb;--card:#fff;--sun:#ffe600;--muted:#5d6388;--line:#e5e8f5}
 *{box-sizing:border-box;margin:0}
-body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:20px 16px 48px}
-.wrap{max-width:520px;margin:0 auto}
-h1{font-size:26px;font-weight:800;margin-bottom:16px}
-h2{font-size:18px;margin:28px 0 10px}
-.box{background:#fff;border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
-label{font-size:14px;font-weight:600;display:flex;flex-direction:column;gap:5px}
-input,select{font:inherit;padding:11px 12px;border:2px solid #d9ddf0;border-radius:10px;background:#fff;color:var(--ink)}
-input:focus,select:focus,button:focus-visible{outline:3px solid var(--ink);outline-offset:1px}
-button{font:inherit;font-weight:800;border:0;border-radius:10px;padding:12px;background:var(--sun);color:var(--ink);cursor:pointer}
-button.sec{background:#e5e8f5}
-button:disabled{opacity:.6}
-.chk{flex-direction:row;align-items:center;gap:10px}.chk input{width:20px;height:20px}
-.aviso{font-size:14px;min-height:20px}.aviso.erro{color:var(--red)}.aviso.ok{color:#1b7a3d}
-.item{display:flex;gap:12px;align-items:center;background:#fff;border-radius:14px;padding:10px;margin-bottom:8px}
-.item img{width:52px;height:52px;border-radius:10px;object-fit:cover;background:#e5e8f5}
-.item div{flex:1;min-width:0;font-size:14px}.item b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item span{color:var(--muted)}
-.item button{padding:8px 12px;background:#fde8e8;color:var(--red)}
-.topo{display:flex;justify-content:space-between;align-items:center}
-.topo button{padding:8px 14px}
-[hidden]{display:none!important}
+body{font-family:'Bricolage Grotesque',system-ui;background:var(--bg);color:var(--ink);min-height:100vh;padding:0 16px 40px}
+header{max-width:760px;margin:0 auto;padding:28px 0 18px}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);margin-top:4px;line-height:1.4}
+.card{max-width:760px;margin:16px auto;background:var(--card);border-radius:20px;padding:18px;box-shadow:0 2px 0 rgba(29,35,88,.08)}
+label{font-size:13px;font-weight:600;display:block;margin:12px 0 6px}
+input[type=text],input[type=url],input[type=number]{width:100%;background:#f8f9ff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font:600 15px 'Bricolage Grotesque';color:var(--ink);outline:0}
+input:focus{border-color:var(--ink)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.check{display:flex;align-items:center;gap:10px;margin:14px 0;background:#fffbe6;border:1px dashed #f0d600;border-radius:12px;padding:10px 12px}
+.check input{width:20px;height:20px}
+button{border:0;border-radius:12px;padding:13px 18px;font:800 15px 'Bricolage Grotesque';cursor:pointer}
+.btn-main{background:var(--ink);color:#fff;width:100%;margin-top:8px}
+.btn-sec{background:var(--bg);color:var(--ink)}
+.btn-danger{background:#ffeaea;color:#b42318}
+.preview{width:100%;aspect-ratio:1.6;object-fit:cover;border-radius:12px;background:#e5e8f5;display:none;margin-top:12px}
+.list{max-width:760px;margin:24px auto;display:grid;gap:10px}
+.item{background:var(--card);border-radius:16px;padding:12px;display:flex;gap:12px;align-items:center;box-shadow:0 1px 0 rgba(29,35,88,.06)}
+.item img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:var(--bg)}
+.item b{font-size:14px;display:block;line-height:1.2}.item span{font-size:13px;color:var(--muted)}
+.actions{margin-left:auto;display:flex;gap:8px}
+#msg{margin-top:10px;font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="wrap">
+<header>
+<h1>Painel</h1>
+<p class="sub">Link é só seu. Sem login. Adiciona, edita e apaga que já aparece na vitrine.</p>
+</header>
 
-<section id="login" hidden>
-  <h1>Entrar no painel</h1>
-  <form class="box" id="fLogin">
-    <label>E-mail<input type="email" id="email" required autocomplete="username"></label>
-    <label>Senha<input type="password" id="senha" required autocomplete="current-password"></label>
-    <button>Entrar</button>
-    <p class="aviso erro" id="erroLogin"></p>
-  </form>
-</section>
+<div class="card">
+<form id="form">
+<input type="hidden" id="id">
+<label>Título do produto</label>
+<input id="title" type="text" required placeholder="Ex: Mini projetor 4K">
+<div class="row">
+<div><label>Preço</label><input id="price" type="number" step="0.01" placeholder="199.90"></div>
+<div><label>Link (afiliado)</label><input id="link" type="url" required placeholder="https://mercadolivre.com/..."></div>
+</div>
+<label>Foto (do celular ou PC)</label>
+<input id="file" type="file" accept="image/*">
+<img id="prev" class="preview">
 
-<section id="painel" hidden>
-  <div class="topo"><h1>Meus produtos</h1><button class="sec" id="sair">Sair</button></div>
-  <form class="box" id="fProd">
-    <label>Nome do produto<input id="title" required maxlength="120"></label>
-    <label>Preço (R$)<input id="price" type="number" step="0.01" min="0" inputmode="decimal"></label>
-    <label>Link de afiliado ou de compra<input id="link" type="url" required placeholder="https://..."></label>
-    <label>Foto do produto<input id="foto" type="file" accept="image/*"></label>
-    <label class="chk"><input type="checkbox" id="own">É um produto meu (não é afiliado)</label>
-    <button id="salvar">Adicionar produto</button>
-    <p class="aviso" id="aviso"></p>
-  </form>
-  <h2>Já publicados</h2>
-  <div id="lista"></div>
-</section>
-
+<div class="check">
+<input id="own" type="checkbox"><label for="own" style="margin:0">Produto meu - mostra etiqueta amarela na vitrine</label>
 </div>
 
+<button class="btn-main" type="submit" id="btn">Salvar produto</button>
+<p id="msg"></p>
+</form>
+</div>
+
+<div class="list" id="lista"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="config.js"></script>
+<script src="./config.js"></script>
 <script>
 const C = window.CONFIG;
 const db = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
-const brl = n => n == null ? 'sem preço' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const say = (t, cls='') => { $('aviso').textContent = t; $('aviso').className = 'aviso ' + cls; };
+const msg = $('msg');
+const prev = $('prev');
 
-function tela(logado) { $('login').hidden = logado; $('painel').hidden = !logado; if (logado) carregar(); }
+$('file').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  prev.src = URL.createObjectURL(f);
+  prev.style.display='block';
+});
 
-db.auth.getSession().then(({data}) => tela(!!data.session));
-
-$('fLogin').onsubmit = async e => {
-  e.preventDefault();
-  const { error } = await db.auth.signInWithPassword({ email: $('email').value, password: $('senha').value });
-  $('erroLogin').textContent = error ? 'E-mail ou senha incorretos.' : '';
-  if (!error) tela(true);
-};
-$('sair').onclick = async () => { await db.auth.signOut(); tela(false); };
-
-async function carregar() {
-  const { data, error } = await db.from('products').select('*').order('created_at',{ascending:false});
-  const box = $('lista'); box.replaceChildren();
-  if (error) { box.textContent = 'Erro ao carregar a lista.'; return; }
-  if (!data.length) { box.textContent = 'Nenhum produto ainda. Adicione o primeiro acima.'; return; }
-  data.forEach(p => {
-    const row = document.createElement('div'); row.className = 'item';
-    const img = document.createElement('img'); img.alt = ''; if (p.image_url) img.src = p.image_url;
-    const info = document.createElement('div');
-    const b = document.createElement('b'); b.textContent = p.title;
-    const s = document.createElement('span'); s.textContent = brl(p.price) + (p.own ? ' · produto meu' : '');
-    info.append(b, s);
-    const del = document.createElement('button'); del.textContent = 'Apagar';
-    del.onclick = async () => {
-      if (!confirm('Apagar "' + p.title + '"?')) return;
-      const { error } = await db.from('products').delete().eq('id', p.id);
-      if (error) alert('Não foi possível apagar.'); else carregar();
-    };
-    row.append(img, info, del); box.append(row);
-  });
+async function upload(file){
+  if(!file) return null;
+  const ext = file.name.split('.').pop();
+  const name = Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext;
+  const { error } = await db.storage.from('produtos').upload(name, file);
+  if(error) throw error;
+  return db.storage.from('produtos').getPublicUrl(name).data.publicUrl;
 }
 
-$('fProd').onsubmit = async e => {
+$('form').addEventListener('submit', async (e)=>{
   e.preventDefault();
-  $('salvar').disabled = true; say('Salvando...');
-  try {
-    let image_url = null;
-    const f = $('foto').files[0];
-    if (f) {
-      const nome = Date.now() + '-' + f.name.replace(/[^a-zA-Z0-9.]/g, '_');
-      const up = await db.storage.from('produtos').upload(nome, f);
-      if (up.error) throw up.error;
-      image_url = db.storage.from('produtos').getPublicUrl(nome).data.publicUrl;
-    }
-    const preco = $('price').value;
-    const { error } = await db.from('products').insert({
+  const btn = $('btn');
+  btn.disabled=true; btn.textContent='Salvando...';
+  msg.textContent='';
+  try{
+    const file = $('file').files[0];
+    let image_url;
+    if(file) image_url = await upload(file);
+
+    const payload = {
       title: $('title').value.trim(),
-      price: preco === '' ? null : Number(preco),
+      price: $('price').value ? Number($('price').value) : null,
       link: $('link').value.trim(),
-      own: $('own').checked,
-      image_url
-    });
-    if (error) throw error;
-    $('fProd').reset(); say('Produto publicado.', 'ok'); carregar();
-  } catch (err) {
-    say('Não foi possível salvar: ' + (err.message || 'erro desconhecido'), 'erro');
-  }
-  $('salvar').disabled = false;
-};
+      own: $('own').checked
+    };
+    if(image_url) payload.image_url = image_url;
+
+    const editId = $('id').value;
+    let err;
+    if(editId){
+      const r = await db.from('products').update(payload).eq('id', editId);
+      err = r.error;
+    }else{
+      if(!payload.image_url) payload.image_url = '';
+      const r = await db.from('products').insert(payload);
+      err = r.error;
+    }
+    if(err) throw err;
+    msg.textContent='✅ Salvo! Já tá na vitrine.';
+    resetForm(); listar();
+  }catch(er){
+    console.error(er);
+    msg.textContent='❌ Erro: '+er.message+' - Rodou o sem-login.sql?';
+  }finally{ btn.disabled=false; btn.textContent='Salvar produto'; }
+});
+
+function resetForm(){
+  $('form').reset(); $('id').value=''; prev.style.display='none'; prev.src='';
+}
+
+async function listar(){
+  const { data, error } = await db.from('products').select('*').order('created_at',{ascending:false});
+  if(error){ $('lista').innerHTML='<p style="color:#b42318">Erro: '+error.message+'<br>Roda o sem-login.sql no Supabase.</p>'; return; }
+  $('lista').innerHTML = data.map(p=>`
+    <div class="item">
+      <img src="${p.image_url||''}">
+      <div><b>${p.title}</b><span>R$ ${p.price!=null?Number(p.price).toFixed(2).replace('.',','):'-'} ${p.own?'• Produto meu':''}</span></div>
+      <div class="actions">
+        <button class="btn-sec" onclick="editar('${p.id}')">Editar</button>
+        <button class="btn-danger" onclick="apagar('${p.id}')">Apagar</button>
+      </div>
+    </div>
+  `).join('') || '<p class="sub" style="text-align:center;padding:20px">Nenhum produto ainda</p>';
+}
+
+window.editar = async (id)=>{
+  const { data } = await db.from('products').select('*').eq('id',id).single();
+  if(!data) return;
+  $('id').value=data.id; $('title').value=data.title; $('price').value=data.price||''; $('link').value=data.link; $('own').checked=!!data.own;
+  if(data.image_url){ prev.src=data.image_url; prev.style.display='block'; }
+  window.scrollTo({top:0,behavior:'smooth'});
+  msg.textContent='Editando: '+data.title+' (se não trocar a foto, mantém a antiga)';
+}
+window.apagar = async (id)=>{
+  if(!confirm('Apagar esse produto?')) return;
+  const { error } = await db.from('products').delete().eq('id',id);
+  if(error) alert(error.message); else listar();
+}
+listar();
 </script>
 </body>
 </html>
