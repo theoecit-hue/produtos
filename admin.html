@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel</title></head><body><script>
+const U="https://hkfcscwwrqujzufvdqbo.supabase.co";const K="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhrZmNzY3d3cnF1anp1ZnZkcWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1MTMyMzIsImV4cCI6MjEwODA4OTIzMn0.Z1lCjRwzUrvvJNHmJeD-vr5-DGyUG4UdBoeCbHlYcPs";
+document.write(`<div style="max-width:600px;margin:20px auto;font-family:system-ui"><h2>PAINEL NOVO - FIX 100%</h2><p>URL: ${U}</p><form id="f"><input id="t" placeholder="Titulo" value="POCO X7 PRO GLOBAL" style="width:100%;padding:10px;margin:5px 0"><input id="p" type="number" value="2385" style="width:100%;padding:10px;margin:5px 0"><input id="l" value="https://meli.la/2U65DP7" style="width:100%;padding:10px;margin:5px 0"><input id="img" type="file" accept="image/*" style="width:100%;margin:5px 0"><button style="width:100%;padding:15px;background:#1d2358;color:#fff;border:0;border-radius:10px">SALVAR AGORA</button><p id="m"></p></form><div id="li"></div></div>`);
+</script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script>
+setTimeout(()=>{
+const db=supabase.createClient(U,K);
+async function up(f){if(!f)return '';const n=Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+f.name.split('.').pop();const {error}=await db.storage.from('produtos').upload(n,f);if(error)throw error;return db.storage.from('produtos').getPublicUrl(n).data.publicUrl;}
+f.onsubmit=async e=>{e.preventDefault();m.textContent='Salvando...';try{let url='';const file=img.files[0];if(file)url=await up(file);const {error}=await db.from('products').insert({title:t.value,price:Number(p.value),link:l.value,image_url:url,own:true});if(error)throw error;m.textContent='✅ SALVOU!';li.innerHTML='Recarrega a vitrine';}catch(er){m.textContent='ERRO: '+er.message;console.error(er);}};
+async function listar(){const {data,error}=await db.from('products').select('*').limit(5);if(error){li.innerHTML='ERRO LISTA: '+error.message+'<br>RODA O SQL NO SUPABASE';return;}li.innerHTML=data.map(x=>x.title).join('<br>');}listar();
+},500);
+</script></body></html>
