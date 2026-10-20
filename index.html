@@ -18,7 +18,7 @@ header p{margin-top:6px;opacity:.85}
 .search-box button{background:var(--sun);color:var(--ink);border:0;border-radius:99px;padding:12px 20px;font-weight:800;cursor:pointer}
 .categorias{margin-top:18px;display:flex;gap:8px;overflow-x:auto;justify-content:flex-start;padding-bottom:4px;scrollbar-width:none;max-width:760px;margin-inline:auto}
 .categorias::-webkit-scrollbar{display:none}
-.chip{white-space:nowrap;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:99px;font-weight:700;font-size:14px;cursor:pointer}
+.chip{white-space:nowrap;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:8px 16px;border-radius:99px;font-weight:700;font-size:14px;cursor:pointer;text-transform:capitalize}
 .chip.ativo{background:var(--sun);color:var(--ink);border-color:var(--sun)}
 main{max-width:760px;margin:0 auto;padding:18px 16px 40px}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
@@ -57,22 +57,15 @@ const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'curre
 let todos = [];
 let catAtiva = 'todos';
 
-// EDITA AQUI SUAS CATEGORIAS SE QUISER
-const CATEGORIAS = [
-  {id:'todos', label:'Todos', keys:[]},
-  {id:'celular', label:'Celulares', keys:['poco','xiaomi','iphone','samsung','moto','realme','celular']},
-  {id:'audio', label:'Áudio', keys:['jbl','fones','headset','caixa','sound','echo']},
-  {id:'casa', label:'Casa', keys:['casa','cozinha','ventilador','air fryer','panela']},
-  {id:'beleza', label:'Beleza', keys:['beleza','perfume','secador','maquiagem']},
-];
-
-function montaCats(){
+function montaCats(listaCats){
   const c = document.getElementById('cats');
-  CATEGORIAS.forEach(cat=>{
+  c.innerHTML = '';
+  const todas = ['todos', ...listaCats];
+  todas.forEach(nome=>{
     const b=document.createElement('button');
-    b.className='chip'+(cat.id===catAtiva?' ativo':'');
-    b.textContent=cat.label;
-    b.onclick=()=>{catAtiva=cat.id; document.querySelectorAll('.chip').forEach(x=>x.classList.remove('ativo')); b.classList.add('ativo'); filtrar();};
+    b.className='chip'+(nome===catAtiva?' ativo':'');
+    b.textContent = nome==='todos' ? 'Todos' : nome;
+    b.onclick=()=>{catAtiva=nome; document.querySelectorAll('.chip').forEach(x=>x.classList.remove('ativo')); b.classList.add('ativo'); filtrar();};
     c.append(b);
   });
 }
@@ -80,27 +73,22 @@ function montaCats(){
 function filtrar(){
   const termo = document.getElementById('busca').value.toLowerCase().trim();
   let lista = [...todos];
-
   if(catAtiva!=='todos'){
-    const cat = CATEGORIAS.find(x=>x.id===catAtiva);
-    lista = lista.filter(p=>{
-      if(p.category && p.category.toLowerCase()===catAtiva) return true;
-      return cat.keys.some(k=>p.title.toLowerCase().includes(k));
-    });
+    lista = lista.filter(p=> (p.category||'').toLowerCase() === catAtiva.toLowerCase());
   }
   if(termo){
     lista = lista.filter(p=>p.title.toLowerCase().includes(termo));
   }
-  render(lista, termo);
+  render(lista);
 }
 
-function render(lista, termoBuscado=''){
+function render(lista){
   const grid = document.getElementById('grid');
   const msg = document.getElementById('msg');
   grid.innerHTML = '';
   if(lista.length===0){
     msg.style.display='block';
-    msg.textContent = termoBuscado ? `Nenhum produto em "${CATEGORIAS.find(c=>c.id===catAtiva).label}" para "${termoBuscado}"` : `Nenhum produto em "${CATEGORIAS.find(c=>c.id===catAtiva).label}" ainda.`;
+    msg.textContent = 'Nenhum produto encontrado.';
     return;
   }
   msg.style.display='none';
@@ -117,11 +105,16 @@ function render(lista, termoBuscado=''){
 }
 
 (async()=>{
-  montaCats();
   const msg=document.getElementById('msg');
   const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
   if(error){ msg.textContent='Erro: '+error.message; return; }
-  todos=data||[]; render(todos);
+  todos=data||[];
+  
+  // PEGA CATEGORIAS REAIS DOS PRODUTOS QUE VOCÊ CADASTROU
+  const catsUnicas = [...new Set(todos.map(p=> (p.category||'').trim()).filter(Boolean))].sort();
+  montaCats(catsUnicas.length ? catsUnicas : ['celulares','audio','casa','beleza']);
+  
+  render(todos);
 })();
 </script>
 </body>
