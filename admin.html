@@ -1,70 +1,23 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel - Achadinhos</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
-<style>
-:root{--ink:#1d2358;--bg:#f2f4fb;--card:#fff;--sun:#ffe600;--muted:#5d6388;--line:#e5e8f5}
-*{box-sizing:border-box;margin:0}
-body{font-family:'Bricolage Grotesque',system-ui;background:var(--bg);color:var(--ink);padding:0 16px 40px}
-header{max-width:760px;margin:0 auto;padding:28px 0 18px}
-h1{font-size:28px;font-weight:800}
-.sub{color:var(--muted);margin-top:4px}
-.card{max-width:760px;margin:16px auto;background:#fff;border-radius:20px;padding:18px}
-label{font-size:13px;font-weight:600;display:block;margin:12px 0 6px}
-input{width:100%;background:#f8f9ff;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;font:600 15px 'Bricolage Grotesque'}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.check{display:flex;align-items:center;gap:10px;margin:14px 0;background:#fffbe6;border:1px dashed #e6d200;border-radius:12px;padding:10px}
-.check input{width:20px}
-button{border:0;border-radius:12px;padding:13px 18px;font:800 15px 'Bricolage Grotesque';cursor:pointer}
-.btn-main{background:var(--ink);color:#fff;width:100%}
-.btn-sec{background:var(--bg);color:var(--ink);width:auto}
-.btn-danger{background:#ffeaea;color:#b42318;width:auto}
-.item{display:flex;gap:12px;align-items:center;background:#fff;border-radius:16px;padding:12px;margin-top:10px}
-.item img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#f2f4fb}
-.preview{width:100%;max-height:220px;object-fit:cover;border-radius:12px;display:none;margin-top:10px}
-</style>
-</head>
-<body>
-<header>
-<h1>Painel do Dono</h1>
-<p class="sub">Sem login. Só você tem o link.</p>
-</header>
-<div class="card">
-<form id="form">
-<input type="hidden" id="edit_id">
-<label>Título</label><input id="title" required placeholder="Ex: Fone Bluetooth">
-<div class="row">
-<div><label>Preço</label><input id="price" type="number" step="0.01" placeholder="99.90"></div>
-<div><label>Link</label><input id="link" type="url" required placeholder="https://mercadolivre.com/..."></div>
-</div>
-<label>Foto</label><input id="file" type="file" accept="image/*">
-<img id="prev" class="preview">
-<div class="check"><input id="own" type="checkbox"><label for="own" style="margin:0">Produto meu</label></div>
-<button class="btn-main" id="btn" type="submit">Salvar produto</button>
-<p id="msg" style="margin-top:10px;color:#71717a;font-size:13px"></p>
-</form>
-</div>
-<div id="lista" style="max-width:760px;margin:20px auto"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="./config.js"></script>
-<script>
-const db = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-const prev = document.getElementById('prev');
-document.getElementById('file').addEventListener('change', e=>{
-  const f=e.target.files[0]; if(!f)return;
-  prev.src=URL.createObjectURL(f); prev.style.display='block';
-});
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel</title><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&display=swap" rel="stylesheet"><style>body{font-family:'Bricolage Grotesque',system-ui;background:#f2f4fb;color:#1d2358;padding:20px} .card{max-width:760px;margin:0 auto;background:#fff;border-radius:20px;padding:18px} input{width:100%;padding:12px;border:1px solid #e5e8f5;border-radius:12px;margin:6px 0} button{background:#1d2358;color:#fff;border:0;border-radius:12px;padding:14px;width:100%;font-weight:800}</style></head><body><div class="card"><h2>Painel - Sem Login</h2><form id="form"><input type="hidden" id="edit_id"><input id="title" placeholder="Título" required><input id="price" type="number" step="0.01" placeholder="Preço"><input id="link" type="url" placeholder="Link do ML" required><input id="file" type="file" accept="image/*"><label><input id="own" type="checkbox"> Produto meu</label><button id="btn" type="submit">Salvar</button><p id="msg"></p></form><div id="lista"></div></div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script><script src="./config.js"></script><script>
+function cleanUrl(u){
+  let url=(u||'').trim();
+  url=url.replace(/\/rest\/v1\/?$/i,'').replace(/\/+$/,'');
+  return url;
+}
+const URL_OK = cleanUrl(CONFIG.SUPABASE_URL);
+const KEY_OK = (CONFIG.SUPABASE_ANON_KEY||'').trim();
+const db = supabase.createClient(URL_OK, KEY_OK);
+console.log('URL usada:', URL_OK);
+
 async function upload(file){
   if(!file)return null;
-  const name=Date.now()+'_'+file.name.replace(/[^a-z0-9.]/gi,'_');
+  const ext=file.name.split('.').pop().toLowerCase();
+  const name=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
   const {error}=await db.storage.from('produtos').upload(name,file);
   if(error)throw error;
   return db.storage.from('produtos').getPublicUrl(name).data.publicUrl;
 }
-document.getElementById('form').addEventListener('submit', async e=>{
+form.addEventListener('submit', async e=>{
   e.preventDefault();
   const btn=document.getElementById('btn'); btn.disabled=true; btn.textContent='Salvando...';
   try{
@@ -73,22 +26,16 @@ document.getElementById('form').addEventListener('submit', async e=>{
     const payload={title:title.value.trim(),price:price.value?Number(price.value):null,link:link.value.trim(),own:own.checked};
     if(image_url) payload.image_url=image_url;
     const editId=edit_id.value;
-    let err;
-    if(editId){const r=await db.from('products').update(payload).eq('id',editId);err=r.error}
-    else{if(!payload.image_url)payload.image_url='';const r=await db.from('products').insert(payload);err=r.error}
-    if(err)throw err;
-    msg.textContent='✅ Salvo!'; form.reset(); edit_id.value=''; prev.style.display='none'; listar();
-  }catch(er){msg.textContent='❌ '+er.message}
-  finally{btn.disabled=false;btn.textContent='Salvar produto';}
+    let r; if(editId){r=await db.from('products').update(payload).eq('id',editId)}else{if(!payload.image_url)payload.image_url='';r=await db.from('products').insert(payload)}
+    if(r.error)throw r.error;
+    msg.textContent='✅ Salvo!'; form.reset(); listar();
+  }catch(er){msg.textContent='❌ Erro: '+er.message; console.error(er);}
+  finally{btn.disabled=false; btn.textContent='Salvar';}
 });
 async function listar(){
   const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
-  if(error){lista.innerHTML='<p style=color:red>Erro: '+error.message+'</p>';return;}
-  lista.innerHTML=data.map(p=>`<div class="item"><img src="${p.image_url||''}"><div><b>${p.title}</b><br><span style="color:#71717a;font-size:13px">R$ ${p.price||'-'}</span></div><div style="margin-left:auto;display:flex;gap:6px"><button class="btn-sec" onclick="editar('${p.id}')">Editar</button><button class="btn-danger" onclick="apagar('${p.id}')">Apagar</button></div></div>`).join('')||'Vazio';
+  if(error){lista.innerHTML='<p style=color:red>Erro lista: '+error.message+'<br>RODA O sem-login.sql no Supabase SQL Editor</p>'; return;}
+  lista.innerHTML=data.map(p=>`<div style="display:flex;gap:10px;align-items:center;margin-top:10px;background:#fff;padding:8px;border-radius:8px"><img src="${p.image_url||''}" style="width:50px;height:50px;object-fit:cover"><b>${p.title}</b></div>`).join('');
 }
-window.editar=async id=>{const {data}=await db.from('products').select('*').eq('id',id).single();edit_id.value=data.id;title.value=data.title;price.value=data.price||'';link.value=data.link;own.checked=!!data.own;if(data.image_url){prev.src=data.image_url;prev.style.display='block';}scrollTo({top:0,behavior:'smooth'});}
-window.apagar=async id=>{if(!confirm('Apagar?'))return;await db.from('products').delete().eq('id',id);listar();}
 listar();
-</script>
-</body>
-</html>
+</script></body></html>
