@@ -31,12 +31,12 @@ main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
 </head>
 <body>
 <header>
-  <div class="avatar" id="ini">B</div>
-  <h1 id="nome">BESSA STORE</h1>
-  <p id="bio">Achadinhos que eu realmente recomendo.</p>
+  <div class="avatar">B</div>
+  <h1>BESSA STORE</h1>
+  <p>Achadinhos que eu realmente recomendo.</p>
   <div class="search-box">
-    <input id="busca" placeholder="Buscar: poco x7, jbl, iphone..." oninput="buscarLocal()">
-    <button onclick="buscarNoML()">Buscar</button>
+    <input id="busca" placeholder="Buscar na loja: poco x7, jbl..." oninput="buscarLocal()">
+    <button onclick="buscarLocal()">Buscar</button>
   </div>
 </header>
 <main><div class="grid" id="grid"></div><p class="vazio" id="msg">Carregando produtos...</p></main>
@@ -46,25 +46,25 @@ main{max-width:760px;margin:0 auto;padding:24px 16px 40px}
 <script>
 function cleanUrl(u){ return (u||'').trim().replace(/\/rest\/v1\/?$/i,'').replace(/\/+$/,''); }
 const C = window.CONFIG;
-const SUPABASE_URL = cleanUrl(C.SUPABASE_URL);
-const db = supabase.createClient(SUPABASE_URL, (C.SUPABASE_ANON_KEY||'').trim());
+const db = supabase.createClient(cleanUrl(C.SUPABASE_URL), (C.SUPABASE_ANON_KEY||'').trim());
 const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let todos = [];
 
 function render(lista){
   const grid = document.getElementById('grid');
+  const msg = document.getElementById('msg');
   grid.innerHTML = '';
   if(lista.length===0){
     const termo = document.getElementById('busca').value.trim();
     if(termo){
-      grid.innerHTML = `<div style="grid-column:1/-1;background:#fff;border:2px dashed #1d2358;border-radius:18px;padding:24px;text-align:center;color:#1d2358">
-        <div style="font-weight:800">Não temos "${termo}" cadastrado ainda</div>
-        <div style="margin-top:10px;background:#ffe600;display:inline-block;padding:12px 20px;border-radius:12px;font-weight:800;cursor:pointer" onclick="buscarNoML()">Buscar ${termo} no Mercado Livre →</div>
-        <div style="margin-top:8px;font-size:12px;color:#5d6388">Cadastre esse produto no seu painel para ganhar comissão</div>
-      </div>`;
+      msg.style.display='block';
+      msg.textContent = `Nenhum produto encontrado para "${termo}" na loja.`;
+    } else {
+      msg.style.display='none';
     }
     return;
   }
+  if(msg) msg.style.display='none';
   lista.forEach(p=>{
     const a=document.createElement('a'); a.className='card'; a.href=p.link; a.target='_blank'; a.rel='sponsored noopener';
     const foto=document.createElement('div'); foto.className='foto'; if(p.image_url) foto.style.backgroundImage=`url("${p.image_url}")`;
@@ -83,17 +83,12 @@ function buscarLocal(){
   const f = todos.filter(p=>p.title.toLowerCase().includes(termo));
   render(f);
 }
-function buscarNoML(){
-  const termo = document.getElementById('busca').value.trim();
-  if(!termo){ alert('Digite o que quer buscar'); return; }
-  window.open(`https://lista.mercadolivre.com.br/${encodeURIComponent(termo)}`, '_blank');
-}
 
 (async()=>{
   const msg=document.getElementById('msg');
   const {data,error}=await db.from('products').select('*').order('created_at',{ascending:false});
   if(error){ msg.textContent='Erro: '+error.message; return; }
-  todos=data||[]; if(msg) msg.remove(); render(todos);
+  todos=data||[]; render(todos);
 })();
 </script>
 </body>
